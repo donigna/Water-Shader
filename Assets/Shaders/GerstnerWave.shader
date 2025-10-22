@@ -7,15 +7,23 @@ Shader "Custom/GerstnerWave"
         _Glossiness ("Smoothness", Range(0,1)) = 0.5
         _Metallic ("Metallic", Range(0,1)) = 0.0
         
-        [Header(Wave)]
-        _WaveA ("Wave A (dir, steepness, wavelength)", Vector) = (1,0,0.5,10)
-        _WaveB ("Wave B", Vector) = (0, 1, 0.25, 20)
-        _WaveC ("Wave C", Vector) = (1, 1, 0.15, 10)
+        [Header(Wave Configuration)]
+        _WaveCount("Wave Count", Range(0, 10)) = 3
+
+        [Header(fBm Noise Settings)]
+        _fbmStrength("Noise Strength", Range(0, 2)) = 0.1
+        _fbmScale("Noise Scale", Range(1, 100)) = 10.0
+        _fbmSpeed("Noise Speed", Range(0, 5)) = 1.0
+        _fbmOctaves("Noise Octaves", Range(1, 8)) = 4
+        _fbmLacunarity("Noise Lacunarity", Range(1.0, 4.0)) = 2.0
+        _fbmGain("Noise Gain", Range(0.0, 1.0)) = 0.5
+        
 
         [Header(Water Shading)]
         _ReflectionTex ("Reflection Cubemap", CUBE) = "" {}
         _ShallowColor ("Shallow Water Color", Color) = (0.1, 0.4, 0.6, 1)
         _DeepColor ("Deep Water Color", Color) = (0.0, 0.1, 0.3, 1)
+        _FoamColor ("Foam Color", Color) = (1,1,1,1)
         _FresnelPower ("Fresnel Power", Range(1, 8)) = 3
     }
 
@@ -25,34 +33,84 @@ Shader "Custom/GerstnerWave"
         LOD 200
 
         CGPROGRAM
-        #pragma surface surf Standard fullforwardshadows vertex:vert 
+        #pragma surface surf Standard fullforwardshadows vertex:vert addshadow
         #pragma target 3.0
 
+        #define MAX_WAVES 10
+
         sampler2D _MainTex;
+        samplerCUBE _ReflectionTex;
 
         struct Input
         {
             float2 uv_MainTex;
-            float3 worldPos : POSITION;
+            float3 worldPos;
+            float3 customNormal;
         };
 
         half _Glossiness;
         half _Metallic;
         fixed4 _Color;
-        // float _Amplitude;
-        float _Steepness;
-        float _Wavelength;
-        // float _Speed;
-        float2 _Direction;
-        float4 _WaveA;
-        float4 _WaveB;
-        float4 _WaveC;
+
+        // Properti Gerstner Wave
+        uniform float4 _Waves[MAX_WAVES];
+        uniform int _WaveCount;
+
+        // Properti fBm
+        float _fbmStrength;
+        float _fbmScale;
+        float _fbmSpeed;
+        int _fbmOctaves;
+        float _fbmLacunarity;
+        float _fbmGain;
+
+        // Properti Shading
         float _FresnelPower;
-        samplerCUBE _ReflectionTex;
         fixed4 _ShallowColor;
         fixed4 _DeepColor;
+        fixed4 _FoamColor;
 
+        // Fungsi noise 2D sederhana (berbasis hash)
+        float2 hash( float2 p ) {
+            p = float2( dot(p,float2(127.1,311.7)), dot(p,float2(269.5,183.3)) );
+            return -1.0 + 2.0*frac(sin(p)*43758.5453123);
+        }
 
+        float noise( in float2 p ) {
+            const float K1 = 0.366025404; // (sqrt(3)-1)/2;
+            const float K2 = 0.211324865; // (3-sqrt(3))/6;
+
+            float2 i = floor( p + (p.x+p.y)*K1 );
+            
+            float2 a = p - i + (i.x+i.y)*K2;
+            float2 o = (a.x>a.y) ? float2(1.0,0.0) : float2(0.0,1.0);
+            float2 b = a - o + K2;
+            float2 c = a - 1.0 + 2.0*K2;
+            
+            float3 h = max( 0.5-float3(dot(a,a), dot(b,b), dot(c,c) ), 0.0 );
+            float3 n = h*h*h*h*float3( dot(a,hash(i+0.0)), dot(b,hash(i+o)), dot(c,hash(i+1.0)));
+
+            return dot( n, float3(70.0, 70.0, 70.0) );
+        }
+
+        // Fungsi Fractional Brownian Motion
+        float fbm(float2 p) {
+            float total = 0.0;
+            float frequency = 1.0;
+            float amplitude = 1.0;
+            float maxValue = 0.0;
+            
+            for (int i = 0; i < _fbmOctaves; i++) {
+                total += noise(p * frequency) * amplitude;
+                maxValue += amplitude;
+                amplitude *= _fbmGain;
+                frequency *= _fbmLacunarity;
+            }
+
+            return total / maxValue;
+        }
+
+        // Fungsi Gerstner Wave
         float3 GerstnerWave (float4 wave, float3 p, inout float3 tangent, inout float3 binormal) {
             float steepness = wave.z;
             float wavelength = wave.w;
@@ -69,7 +127,7 @@ Shader "Custom/GerstnerWave"
             ); 
 
             binormal += float3 (
-                d.x * d.y * (steepness * sin(f)),
+                -d.x * d.y * (steepness * sin(f)),
                 d.y * (steepness * cos(f)),
                 -d.y * d.y * (steepness * sin(f))
             );
@@ -81,39 +139,64 @@ Shader "Custom/GerstnerWave"
             );
         }
 
-        void vert(inout appdata_full vertexData)
+        void vert(inout appdata_full v, out Input o)
         {
-            float3 gridPoint = vertexData.vertex.xyz;
-            float3 tangent = float3 (1,0,0);
-            float3 binormal = float3 (0,0,1);
+            UNITY_INITIALIZE_OUTPUT(Input, o);
+            
+            float3 gridPoint = v.vertex.xyz;
             float3 p = gridPoint;
-            p += GerstnerWave(_WaveA, gridPoint, tangent, binormal);
-            p += GerstnerWave(_WaveB, gridPoint, tangent, binormal);
-            p += GerstnerWave(_WaveC, gridPoint, tangent, binormal);
+
+            // 1. Hitung ombak besar dengan Gerstner Waves
+            float3 tangent = float3(1, 0, 0);
+            float3 binormal = float3(0, 0, 1);
+            for (int i = 0; i < _WaveCount; i++)
+            {
+                p += GerstnerWave(_Waves[i], gridPoint, tangent, binormal);
+            }
+            
+            // 2. Tambahkan detail riak kecil dengan fBm
+            float2 noiseCoords = (gridPoint.xz / _fbmScale) + (_Time.y * _fbmSpeed);
+            float noiseVal = fbm(noiseCoords);
+            p.y += noiseVal * _fbmStrength;
+
+            // Hitung normal dari Gerstner waves (fBm terlalu kecil untuk dihitung normalnya secara akurat di sini)
             float3 normal = normalize(cross(binormal, tangent));
-            vertexData.vertex.xyz = p;
-            vertexData.normal = normal;
+            
+            v.vertex.xyz = p;
+            v.normal = normal;
+            o.customNormal = UnityObjectToWorldNormal(normal);
+            o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
         }
 
 		void surf (Input IN, inout SurfaceOutputStandard o) {
 			fixed4 c = tex2D (_MainTex, IN.uv_MainTex) * _Color;
 
-            // ambil arah pandang & normal permukaan
             float3 viewDir = normalize(UnityWorldSpaceViewDir(IN.worldPos));
-            float3 normal = normalize(o.Normal);
+            float3 normal = normalize(IN.customNormal);
 
-            // Fresnel 
-            float fresnel = pow(1 - saturate(dot(viewDir, normal)), _FresnelPower);
+            float fresnel = pow(1.0 - saturate(dot(viewDir, normal)), _FresnelPower);
 
-            // Reflection
+            // Busa dari Gerstner Wave (di puncak ombak)
+            float gerstnerFoam = saturate(1.0 - normal.y);
+            gerstnerFoam *= pow(fresnel, 0.5);
+
+            // Busa dari fBm (detail noise)
+            float2 noiseCoords = (IN.worldPos.xz / (_fbmScale * 0.5)) + (_Time.y * _fbmSpeed);
+            float fbmFoam = fbm(noiseCoords);
+            fbmFoam = saturate((fbmFoam + 1.0) * 0.5); // Remap noise ke 0-1
+            
+            // Gabungkan kedua jenis busa
+            float finalFoam = saturate(gerstnerFoam + pow(fbmFoam, 3.0) * 0.5);
+
             float3 reflDir = reflect(-viewDir, normal);
             float3 reflection = texCUBE(_ReflectionTex, reflDir).rgb;
 
-            // deep color
             float depthFactor = saturate((IN.worldPos.y + 5) / 10);
             float3 depthColor = lerp(_DeepColor.rgb, _ShallowColor.rgb, depthFactor);
 
-			o.Albedo = lerp(depthColor, reflection, fresnel);
+            float3 baseColor = lerp(depthColor, reflection, fresnel);
+            
+			o.Albedo = lerp(baseColor, _FoamColor.rgb, finalFoam * 0.7);
 			o.Metallic = _Metallic;
 			o.Smoothness = _Glossiness;
 			o.Alpha = c.a;

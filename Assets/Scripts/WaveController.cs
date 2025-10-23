@@ -7,8 +7,11 @@ public class WaveController : MonoBehaviour
     /// The number of waves to calculate. This will be passed to the shader.
     /// </summary>
     [Tooltip("Number of active waves. Must be between 0 and 10.")]
-    [Range(0, 10)]
-    public int waveCount = 3;
+    [Range(0, 32)]
+    [SerializeField] int waveCount = 32;
+    [SerializeField] Vector2 amplitudeRange = new Vector2(0.02f, 0.15f);
+    [SerializeField] Vector2 wavelengthRange = new Vector2(5f, 15f);
+
 
     /// <summary>
     /// Wave data. Each Vector4 represents one wave.
@@ -17,22 +20,21 @@ public class WaveController : MonoBehaviour
     /// W: Wavelength (distance between crests).
     /// </summary>
     [Tooltip("Wave Data (XY=Direction, Z=Steepness, W=Wavelength)")]
-    public Vector4[] waves = new Vector4[10];
+    public Vector4[] waves = new Vector4[32];
 
-    // Default wave presets for demonstration.
-    private static readonly Vector4[] defaultWaves = new Vector4[]
+    Vector4[] GenerateLowWaves()
     {
-        new Vector4(1.0f, 0.0f, 0.5f, 10.0f),
-        new Vector4(0.0f, 1.0f, 0.25f, 20.0f),
-        new Vector4(1.0f, 1.0f, 0.15f, 10.0f),
-        new Vector4(0.5f, 0.2f, 0.2f, 5.0f),
-        new Vector4(0.2f, 0.8f, 0.1f, 12.0f),
-        new Vector4(0.8f, -0.4f, 0.3f, 8.0f),
-        new Vector4(-0.3f, 0.6f, 0.15f, 15.0f),
-        new Vector4(-0.7f, -0.1f, 0.25f, 6.0f),
-        new Vector4(0.4f, 0.9f, 0.05f, 25.0f),
-        new Vector4(-0.9f, 0.3f, 0.1f, 18.0f)
-    };
+        Vector4[] waves = new Vector4[waveCount];
+        for (int i = 0; i < waveCount; i++)
+        {
+            Vector2 dir = Random.insideUnitCircle.normalized;
+            float amplitude = Random.Range(amplitudeRange.x, amplitudeRange.y);
+            float wavelength = Random.Range(wavelengthRange.x, wavelengthRange.y);
+
+            waves[i] = new Vector4(dir.x, dir.y, amplitude, wavelength);
+        }
+        return waves;
+    }
 
     private Material _material;
 
@@ -42,6 +44,8 @@ public class WaveController : MonoBehaviour
     [ContextMenu("Reset Waves to Default")]
     void ResetWaves()
     {
+        Vector4[] defaultWaves = GenerateLowWaves();
+
         for (int i = 0; i < waves.Length; i++)
         {
             if (i < defaultWaves.Length)
@@ -49,7 +53,7 @@ public class WaveController : MonoBehaviour
                 waves[i] = defaultWaves[i];
             }
         }
-        waveCount = 3;
+        waveCount = 32;
         UpdateShaderProperties();
     }
 

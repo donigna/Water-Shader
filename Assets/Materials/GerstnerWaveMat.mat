@@ -12,7 +12,10 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
-  m_InvalidKeywords: []
+  m_InvalidKeywords:
+  - GERSTNER_WAVE
+  - NORMALS_IN_PIXEL_SHADER
+  - USE_FBM
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
@@ -23,89 +26,42 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
-    - _BumpMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailAlbedoMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailMask:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailNormalMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _EmissionMap:
-        m_Texture: {fileID: 0}
+    - _EnvironmentMap:
+        m_Texture: {fileID: 8900000, guid: 1153dc89e66880c4eb7adc16ba588855, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _MetallicGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _OcclusionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _ParallaxMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - _ReflectionTex:
-        m_Texture: {fileID: 8900000, guid: 1153dc89e66880c4eb7adc16ba588855, type: 3}
-        m_Scale: {x: 0, y: 0}
+        m_Texture: {fileID: 8900000, guid: 90196f2c2d8d2f2448717676e1a09894, type: 3}
+        m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Amplitude: 1.51
-    - _BumpScale: 1
-    - _Cutoff: 0.5
-    - _DetailNormalMapScale: 1
-    - _DstBlend: 0
+    - _Emission: 1
+    - _FoamStrength: 0.4
     - _FresnelPower: 8
-    - _GlossMapScale: 1
-    - _Glossiness: 0
-    - _GlossyReflections: 1
+    - _Glossiness: 1
     - _Metallic: 0
-    - _Mode: 0
-    - _OcclusionStrength: 1
-    - _Parallax: 0.02
-    - _SmoothnessTextureChannel: 0
-    - _SpecularHighlights: 1
-    - _Speed: 4.6
-    - _SrcBlend: 1
-    - _Steepness: 0.82
-    - _UVSec: 0
-    - _WaveCount: 10
-    - _Wavelength: 22.71
+    - _NormalStrength: 5
+    - _ReflectionPower: 1
+    - _Translucency: 3
+    - _TranslucencyPower: 10
+    - _UseEnvironmentMap: 0.6
+    - _WaveCount: 32
     - _ZWrite: 1
-    - _fbmGain: 0.5
-    - _fbmLacunarity: 2
-    - _fbmOctaves: 4
-    - _fbmScale: 10
-    - _fbmSpeed: 1
-    - _fbmStrength: 1.5
+    - _fbmGain: 0.73
+    - _fbmLacunarity: 1.8
+    - _fbmOctaves: 5.65
+    - _fbmScale: 1
+    - _fbmSpeed: 1.1
+    - _fbmStrength: 0.99
     m_Colors:
-    - _Color: {r: 0.40961587, g: 0.6581219, b: 0.8742138, a: 1}
-    - _Color1: {r: 0.5523317, g: 0.6697816, b: 0.67295593, a: 1}
-    - _Color2: {r: 0.29543912, g: 0.6241466, b: 0.9685534, a: 1}
-    - _DeepColor: {r: 0.16306701, g: 0.16306701, b: 0.5345911, a: 1}
-    - _Direction: {r: 1, g: 1, b: 0, a: 0}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _FoamColor: {r: 1, g: 1, b: 1, a: 1}
-    - _ShallowColor: {r: 0.11635202, g: 0.65000635, b: 1, a: 1}
-    - _WaveA: {r: 1, g: 0, b: 0.1, a: 10}
-    - _WaveArray: {r: 1, g: 0, b: 0.5, a: 10}
-    - _WaveB: {r: 0.5, g: 1, b: 0.05, a: 10}
-    - _WaveC: {r: 0.1, g: 1, b: 0.03, a: 20}
-    - _Waves: {r: 1, g: 0, b: 0.5, a: 10}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _DeepColor: {r: 0.025453743, g: 0.41970208, b: 0.899371, a: 1}
+    - _FoamColor: {r: 0.7030971, g: 0.9433962, b: 0.922674, a: 1}
+    - _ShallowColor: {r: 0.2924527, g: 0.86305517, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

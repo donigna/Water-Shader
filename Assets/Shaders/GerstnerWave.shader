@@ -8,7 +8,7 @@ Shader "Custom/GerstnerWave"
         _Metallic ("Metallic", Range(0,1)) = 0.0
         
         [Header(Wave Configuration)]
-        _WaveCount("Wave Count", Range(0, 10)) = 3
+        _WaveCount("Wave Count", Range(0, 32)) = 32
 
         [Header(fBm Noise Settings)]
         _fbmStrength("Noise Strength", Range(0, 2)) = 0.1
@@ -21,10 +21,12 @@ Shader "Custom/GerstnerWave"
 
         [Header(Water Shading)]
         _ReflectionTex ("Reflection Cubemap", CUBE) = "" {}
+        _ReflectionPower ("Reflection Power", Range(0, 1)) = 1
         _ShallowColor ("Shallow Water Color", Color) = (0.1, 0.4, 0.6, 1)
         _DeepColor ("Deep Water Color", Color) = (0.0, 0.1, 0.3, 1)
         _FoamColor ("Foam Color", Color) = (1,1,1,1)
-        _FresnelPower ("Fresnel Power", Range(1, 8)) = 3
+        _FoamStrength ("Foam Strength", Range(0, 1)) = 0.5
+        _FresnelPower ("Fresnel Power", Range(1, 8)) = 2
     }
 
     SubShader
@@ -36,7 +38,7 @@ Shader "Custom/GerstnerWave"
         #pragma surface surf Standard fullforwardshadows vertex:vert addshadow
         #pragma target 3.0
 
-        #define MAX_WAVES 10
+        #define MAX_WAVES 32
 
         sampler2D _MainTex;
         samplerCUBE _ReflectionTex;
@@ -168,6 +170,9 @@ Shader "Custom/GerstnerWave"
             o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
         }
 
+        float _FoamStrength;
+        float _ReflectionPower;
+
 		void surf (Input IN, inout SurfaceOutputStandard o) {
 			fixed4 c = tex2D (_MainTex, IN.uv_MainTex) * _Color;
 
@@ -189,14 +194,14 @@ Shader "Custom/GerstnerWave"
             float finalFoam = saturate(gerstnerFoam + pow(fbmFoam, 3.0) * 0.5);
 
             float3 reflDir = reflect(-viewDir, normal);
-            float3 reflection = texCUBE(_ReflectionTex, reflDir).rgb;
+            float3 reflection = texCUBE(_ReflectionTex, reflDir).rgb * _ReflectionPower;
 
             float depthFactor = saturate((IN.worldPos.y + 5) / 10);
             float3 depthColor = lerp(_DeepColor.rgb, _ShallowColor.rgb, depthFactor);
 
             float3 baseColor = lerp(depthColor, reflection, fresnel);
             
-			o.Albedo = lerp(baseColor, _FoamColor.rgb, finalFoam * 0.7);
+			o.Albedo = lerp(baseColor, _FoamColor.rgb, finalFoam * _FoamStrength);
 			o.Metallic = _Metallic;
 			o.Smoothness = _Glossiness;
 			o.Alpha = c.a;

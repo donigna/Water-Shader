@@ -1,7 +1,7 @@
 
 # 🌊 Water System (Unity Built-in Render Pipeline)
 
-![GerstnerWaveGif.gif](https://github.com/donigna/Water-Shader/blob/main/GerstnerWaterGif.gif?raw=true)
+![Gerstner Wave](https://github.com/donigna/Water-Shader/blob/main/GerstnerWaterGif.gif?raw=true)
 
 This project implements a **real-time procedural ocean system** using **Gerstner Waves** combined with **fBm noise** to create dynamic and realistic ocean surfaces.  
 It includes **buoyancy physics** that allow floating objects to move naturally with the waves.

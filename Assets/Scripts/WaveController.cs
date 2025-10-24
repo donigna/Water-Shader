@@ -78,7 +78,6 @@ public class WaveController : MonoBehaviour
         if (_material == null)
         {
             MeshRenderer renderer = GetComponent<MeshRenderer>();
-            // Use sharedMaterial in editor to avoid creating material instances.
             _material = Application.isPlaying ? renderer.material : renderer.sharedMaterial;
         }
     }

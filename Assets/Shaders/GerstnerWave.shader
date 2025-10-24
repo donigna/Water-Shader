@@ -2,11 +2,11 @@ Shader "Custom/GerstnerWave"
 {
     Properties
     {
-        _Color ("Color", Color) = (1,1,1,1)
+        _Color ("Color", Color) = (1, 1, 1, 1)
         _MainTex ("Albedo (RGB)", 2D) = "white" {}
-        _Glossiness ("Smoothness", Range(0,1)) = 0.5
-        _Metallic ("Metallic", Range(0,1)) = 0.0
-        
+        _Glossiness ("Smoothness", Range(0, 1)) = 0.5
+        _Metallic ("Metallic", Range(0, 1)) = 0.0
+
         [Header(Wave Configuration)]
         _WaveCount("Wave Count", Range(0, 32)) = 32
 
@@ -17,21 +17,21 @@ Shader "Custom/GerstnerWave"
         _fbmOctaves("Noise Octaves", Range(1, 8)) = 4
         _fbmLacunarity("Noise Lacunarity", Range(1.0, 4.0)) = 2.0
         _fbmGain("Noise Gain", Range(0.0, 1.0)) = 0.5
-        
+
 
         [Header(Water Shading)]
         _ReflectionTex ("Reflection Cubemap", CUBE) = "" {}
         _ReflectionPower ("Reflection Power", Range(0, 1)) = 1
         _ShallowColor ("Shallow Water Color", Color) = (0.1, 0.4, 0.6, 1)
         _DeepColor ("Deep Water Color", Color) = (0.0, 0.1, 0.3, 1)
-        _FoamColor ("Foam Color", Color) = (1,1,1,1)
+        _FoamColor ("Foam Color", Color) = (1, 1, 1, 1)
         _FoamStrength ("Foam Strength", Range(0, 1)) = 0.5
         _FresnelPower ("Fresnel Power", Range(1, 8)) = 2
     }
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags { "RenderType" = "Opaque" }
         LOD 200
 
         CGPROGRAM
@@ -72,37 +72,36 @@ Shader "Custom/GerstnerWave"
         fixed4 _DeepColor;
         fixed4 _FoamColor;
 
-        // Fungsi noise 2D sederhana (berbasis hash)
-        float2 hash( float2 p ) {
-            p = float2( dot(p,float2(127.1,311.7)), dot(p,float2(269.5,183.3)) );
-            return -1.0 + 2.0*frac(sin(p)*43758.5453123);
+        float2 hash(float2 p) {
+            p = float2(dot(p, float2(127.1, 311.7)), dot(p, float2(269.5, 183.3)));
+            return - 1.0 + 2.0 * frac(sin(p) * 43758.5453123);
         }
 
-        float noise( in float2 p ) {
-            const float K1 = 0.366025404; // (sqrt(3)-1)/2;
-            const float K2 = 0.211324865; // (3-sqrt(3))/6;
+        float noise(in float2 p) {
+            const float K1 = 0.366025404; // (sqrt(3) - 1) / 2;
+            const float K2 = 0.211324865; // (3 - sqrt(3)) / 6;
 
-            float2 i = floor( p + (p.x+p.y)*K1 );
-            
-            float2 a = p - i + (i.x+i.y)*K2;
-            float2 o = (a.x>a.y) ? float2(1.0,0.0) : float2(0.0,1.0);
+            float2 i = floor(p + (p.x + p.y) * K1);
+
+            float2 a = p - i + (i.x + i.y) * K2;
+            float2 o = (a.x > a.y) ? float2(1.0, 0.0) : float2(0.0, 1.0);
             float2 b = a - o + K2;
-            float2 c = a - 1.0 + 2.0*K2;
-            
-            float3 h = max( 0.5-float3(dot(a,a), dot(b,b), dot(c,c) ), 0.0 );
-            float3 n = h*h*h*h*float3( dot(a,hash(i+0.0)), dot(b,hash(i+o)), dot(c,hash(i+1.0)));
+            float2 c = a - 1.0 + 2.0 * K2;
 
-            return dot( n, float3(70.0, 70.0, 70.0) );
+            float3 h = max(0.5 - float3(dot(a, a), dot(b, b), dot(c, c)), 0.0);
+            float3 n = h * h * h * h * float3(dot(a, hash(i + 0.0)), dot(b, hash(i + o)), dot(c, hash(i + 1.0)));
+
+            return dot(n, float3(70.0, 70.0, 70.0));
         }
 
-        // Fungsi Fractional Brownian Motion
+        // Fractional Brownian Motion
         float fbm(float2 p) {
             float total = 0.0;
             float frequency = 1.0;
             float amplitude = 1.0;
             float maxValue = 0.0;
-            
-            for (int i = 0; i < _fbmOctaves; i++) {
+
+            for (int i = 0; i < _fbmOctaves; i ++) {
                 total += noise(p * frequency) * amplitude;
                 maxValue += amplitude;
                 amplitude *= _fbmGain;
@@ -112,7 +111,7 @@ Shader "Custom/GerstnerWave"
             return total / maxValue;
         }
 
-        // Fungsi Gerstner Wave
+        // Gerstner Wave
         float3 GerstnerWave (float4 wave, float3 p, inout float3 tangent, inout float3 binormal) {
             float steepness = wave.z;
             float wavelength = wave.w;
@@ -123,47 +122,44 @@ Shader "Custom/GerstnerWave"
             float a = steepness / k;
 
             tangent += float3 (
-                -d.x * d.x * (steepness * sin(f)),
-                d.x * (steepness * cos(f)),
-                -d.x * d.y * (steepness * sin(f))
-            ); 
+            - d.x * d.x * (steepness * sin(f)),
+            d.x * (steepness * cos(f)),
+            - d.x * d.y * (steepness * sin(f))
+            );
 
             binormal += float3 (
-                -d.x * d.y * (steepness * sin(f)),
-                d.y * (steepness * cos(f)),
-                -d.y * d.y * (steepness * sin(f))
+            - d.x * d.y * (steepness * sin(f)),
+            d.y * (steepness * cos(f)),
+            - d.y * d.y * (steepness * sin(f))
             );
 
             return float3(
-                d.x * (a * cos(f)),
-                a * sin(f),
-                d.y * (a * cos(f))
+            d.x * (a * cos(f)),
+            a * sin(f),
+            d.y * (a * cos(f))
             );
         }
 
         void vert(inout appdata_full v, out Input o)
         {
             UNITY_INITIALIZE_OUTPUT(Input, o);
-            
+
             float3 gridPoint = v.vertex.xyz;
             float3 p = gridPoint;
 
-            // 1. Hitung ombak besar dengan Gerstner Waves
             float3 tangent = float3(1, 0, 0);
             float3 binormal = float3(0, 0, 1);
-            for (int i = 0; i < _WaveCount; i++)
+            for (int i = 0; i < _WaveCount; i ++)
             {
                 p += GerstnerWave(_Waves[i], gridPoint, tangent, binormal);
             }
-            
-            // 2. Tambahkan detail riak kecil dengan fBm
+
             float2 noiseCoords = (gridPoint.xz / _fbmScale) + (_Time.y * _fbmSpeed);
             float noiseVal = fbm(noiseCoords);
             p.y += noiseVal * _fbmStrength;
 
-            // Hitung normal dari Gerstner waves (fBm terlalu kecil untuk dihitung normalnya secara akurat di sini)
             float3 normal = normalize(cross(binormal, tangent));
-            
+
             v.vertex.xyz = p;
             v.normal = normal;
             o.customNormal = UnityObjectToWorldNormal(normal);
@@ -173,40 +169,37 @@ Shader "Custom/GerstnerWave"
         float _FoamStrength;
         float _ReflectionPower;
 
-		void surf (Input IN, inout SurfaceOutputStandard o) {
-			fixed4 c = tex2D (_MainTex, IN.uv_MainTex) * _Color;
+        void surf (Input IN, inout SurfaceOutputStandard o) {
+            fixed4 c = tex2D (_MainTex, IN.uv_MainTex) * _Color;
 
             float3 viewDir = normalize(UnityWorldSpaceViewDir(IN.worldPos));
             float3 normal = normalize(IN.customNormal);
 
             float fresnel = pow(1.0 - saturate(dot(viewDir, normal)), _FresnelPower);
 
-            // Busa dari Gerstner Wave (di puncak ombak)
             float gerstnerFoam = saturate(1.0 - normal.y);
             gerstnerFoam *= pow(fresnel, 0.5);
 
-            // Busa dari fBm (detail noise)
             float2 noiseCoords = (IN.worldPos.xz / (_fbmScale * 0.5)) + (_Time.y * _fbmSpeed);
             float fbmFoam = fbm(noiseCoords);
-            fbmFoam = saturate((fbmFoam + 1.0) * 0.5); // Remap noise ke 0-1
-            
-            // Gabungkan kedua jenis busa
+            fbmFoam = saturate((fbmFoam + 1.0) * 0.5); 
+
             float finalFoam = saturate(gerstnerFoam + pow(fbmFoam, 3.0) * 0.5);
 
-            float3 reflDir = reflect(-viewDir, normal);
+            float3 reflDir = reflect(- viewDir, normal);
             float3 reflection = texCUBE(_ReflectionTex, reflDir).rgb * _ReflectionPower;
 
             float depthFactor = saturate((IN.worldPos.y + 5) / 10);
             float3 depthColor = lerp(_DeepColor.rgb, _ShallowColor.rgb, depthFactor);
 
             float3 baseColor = lerp(depthColor, reflection, fresnel);
-            
-			o.Albedo = lerp(baseColor, _FoamColor.rgb, finalFoam * _FoamStrength);
-			o.Metallic = _Metallic;
-			o.Smoothness = _Glossiness;
-			o.Alpha = c.a;
-		}
-		ENDCG
-	}
-	FallBack "Diffuse"
+
+            o.Albedo = lerp(baseColor, _FoamColor.rgb, finalFoam * _FoamStrength);
+            o.Metallic = _Metallic;
+            o.Smoothness = _Glossiness;
+            o.Alpha = c.a;
+        }
+        ENDCG
+    }
+    FallBack "Diffuse"
 }
